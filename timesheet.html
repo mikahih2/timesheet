@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#c2185b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>My Timesheet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --pink:#c2185b;
+  --pink-light:#fce4ec;
+  --pink-mid:#e91e63;
+  --pink-dark:#880e4f;
+  --clinic:#7b1fa2;
+  --clinic-light:#f3e5f5;
+  --text:#1a1a1a;
+  --text-muted:#6b7280;
+  --surface:#ffffff;
+  --bg:#fdf6f9;
+  --border:rgba(0,0,0,0.09);
+  --radius:14px;
+  --radius-sm:9px;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:5rem;}
+
+header{background:var(--pink);color:white;padding:1.125rem 1.25rem 0.875rem;position:sticky;top:0;z-index:20;}
+header h1{font-size:19px;font-weight:600;letter-spacing:-0.02em;}
+header p{font-size:12px;opacity:0.8;margin-top:2px;}
+
+.tabs{display:flex;background:var(--pink-dark);position:sticky;top:56px;z-index:19;}
+.tab{flex:1;padding:10px 4px;font-family:inherit;font-size:13px;font-weight:500;color:rgba(255,255,255,0.65);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;}
+.tab.active{color:white;border-bottom-color:white;}
+
+.container{padding:1rem;max-width:520px;margin:0 auto;}
+
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:1rem 1.125rem;margin-bottom:0.875rem;}
+.card-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.875rem;}
+
+.settings-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.settings-row:last-child{margin-bottom:0;}
+.settings-row label{font-size:14px;color:var(--text-muted);min-width:95px;}
+
+input[type="number"],input[type="date"],input[type="time"],select{
+  flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-family:inherit;font-size:14px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(194,24,91,0.12);}
+
+.period-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.nav-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 14px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--text-muted);}
+.nav-btn:active{background:var(--pink-light);}
+.period-label{font-size:13px;font-weight:500;color:var(--text);text-align:center;}
+
+.entry-item{padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.entry-item:last-child{border-bottom:none;}
+.entry-date{font-size:13px;font-weight:500;color:var(--text);}
+.entry-times{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.entry-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.entry-hours{font-size:16px;font-weight:600;color:var(--text);}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
+.badge.regular{background:var(--pink-light);color:var(--pink-dark);}
+.badge.clinic{background:var(--clinic-light);color:var(--clinic);}
+.del-btn{background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;width:28px;height:28px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.del-btn:active{background:#fde8e8;color:#c0392b;}
+.empty{text-align:center;font-size:14px;color:var(--text-muted);padding:1.5rem 0;}
+
+.add-section{border-top:1px solid var(--border);margin-top:10px;padding-top:14px;}
+.form-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+.form-group{margin-bottom:10px;}
+.time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.add-btn{width:100%;padding:11px;background:var(--pink);color:white;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.add-btn:active{background:var(--pink-dark);}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat{background:var(--bg);border-radius:var(--radius-sm);padding:12px;}
+.stat-label{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+.stat-value{font-size:24px;font-weight:600;color:var(--text);letter-spacing:-0.02em;}
+.stat-value.pay{color:var(--pink);}
+
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.cal-month{font-size:16px;font-weight:600;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;font-weight:500;}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:var(--radius-sm);cursor:pointer;border:1.5px solid transparent;padding:2px;}
+.cal-day .day-num{font-size:13px;font-weight:500;color:var(--text);}
+.cal-day.other-month .day-num{color:rgba(0,0,0,0.15);}
+.cal-day.other-month{cursor:default;}
+.cal-day.has-regular{background:var(--pink-light);}
+.cal-day.has-clinic{background:var(--clinic-light);}
+.cal-day.has-both{background:linear-gradient(135deg,var(--pink-light) 50%,var(--clinic-light) 50%);}
+.cal-day.today{border-color:var(--pink);}
+.cal-day.selected{border-color:var(--pink);box-shadow:0 0 0 1.5px var(--pink);}
+.cal-day .day-hrs{font-size:9px;color:var(--text-muted);margin-top:1px;line-height:1;}
+.cal-day.has-regular .day-hrs,.cal-day.has-both .day-hrs{color:var(--pink-dark);}
+.cal-day.has-clinic .day-hrs{color:var(--clinic);}
+
+.week-detail{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.week-title{font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;}
+.week-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
+.week-row:last-child{border-bottom:none;}
+.week-day-name{font-size:12px;color:var(--text-muted);min-width:32px;font-weight:500;}
+.week-day-date{font-size:13px;color:var(--text);flex:1;}
+.week-day-right{text-align:right;}
+.week-day-hrs{font-size:14px;font-weight:600;color:var(--text);}
+.week-day-times{font-size:11px;color:var(--text-muted);}
+
+.calc-preview{background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;text-align:center;}
+
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:white;padding:10px 18px;border-radius:20px;font-size:13px;transition:transform 0.3s ease;z-index:100;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.view{display:none;}
+.view.active{display:block;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>My Timesheet</h1>
+  <p id="header-period">Set your start date in settings</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showView('log',this)">Log</button>
+  <button class="tab" onclick="showView('calendar',this)">Calendar</button>
+  <button class="tab" onclick="showView('settings',this)">Settings</button>
+</div>
+
+<div class="container">
+
+  <!-- LOG VIEW -->
+  <div class="view active" id="view-log">
+    <div class="card">
+      <div class="period-nav">
+        <button class="nav-btn" onclick="shiftPeriod(-1)">&#8592; Prev</button>
+        <span class="period-label" id="period-label">—</span>
+        <button class="nav-btn" onclick="shiftPeriod(1)">Next &#8594;</button>
+      </div>
+      <div id="entries-list"><div class="empty">No entries yet.</div></div>
+      <div class="add-section">
+        <div class="form-group">
+          <div class="form-label">Date</div>
+          <input type="date" id="new-date" style="width:100%">
+        </div>
+        <div class="time-row">
+          <div>
+            <div class="form-label">Start</div>
+            <input type="time" id="new-start" value="08:00">
+          </div>
+          <div>
+            <div class="form-label">End</div>
+            <input type="time" id="new-end" value="16:00">
+          </div>
+          <div>
+            <div class="form-label">Lunch (min)</div>
+            <input type="number" id="new-lunch" value="30" min="0" step="5" style="width:100%">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Type</div>
+          <select id="new-type" style="width:100%">
+            <option value="regular">Regular</option>
+            <option value="clinic">After-hours clinic</option>
+          </select>
+        </div>
+        <div class="calc-preview">
+          <span style="font-size:12px;color:var(--text-muted);">Calculated hours: </span>
+          <span id="calc-preview" style="font-size:15px;font-weight:600;color:var(--pink);">—</span>
+        </div>
+        <button class="add-btn" onclick="addEntry()">+ Add entry</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Period summary</div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">Total hours</div><div class="stat-value" id="stat-total">0.00</div></div>
+        <div class="stat"><div class="stat-label">Clinic hours</div><div class="stat-value" id="stat-clinic">0.00</div></div>
+        <div class="stat"><div class="stat-label">Regular hours</div><div class="stat-value" id="stat-regular">0.00</div></div>
+        <div class="stat"><div class="stat-label">Est. pay</div><div class="stat-value pay" id="stat-pay">$0.00</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR VIEW -->
+  <div class="view" id="view-calendar">
+    <div class="card">
+      <div class="cal-header">
+        <button class="nav-btn" onclick="shiftMonth(-1)">&#8592;</button>
+        <span class="cal-month" id="cal-month-label">—</span>
+        <button class="nav-btn" onclick="shiftMonth(1)">&#8594;</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div id="week-detail" style="display:none;"></div>
+    </div>
+    <div class="card" style="font-size:12px;color:var(--text-muted);line-height:1.6;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--pink-light);vertical-align:middle;margin-right:4px;"></span>Regular &nbsp;
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--clinic-light);vertical-align:middle;margin-right:4px;"></span>Clinic &nbsp;
+      Tap any day to see that week's detail.
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="view" id="view-settings">
+    <div class="card">
+      <div class="card-title">Pay settings</div>
+      <div class="settings-row">
+        <label>Hourly rate</label>
+        <input type="number" id="rate" value="20" min="0" step="0.01" style="max-width:100px;" oninput="save()">
+        <span style="font-size:13px;color:var(--text-muted);">$/hr</span>
+      </div>
+      <div class="settings-row">
+        <label>Period start</label>
+        <input type="date" id="period-start" oninput="save();periodOffset=0;render();">
+      </div>
+    </div>
+    <div class="card" style="background:var(--pink-light);border-color:rgba(194,24,91,0.15);">
+      <div class="card-title" style="color:var(--pink-dark);">Tip</div>
+      <p style="font-size:13px;color:var(--pink-dark);line-height:1.6;">When your probation ends and your rate changes, just update the hourly rate above — all your summaries will recalculate automatically.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let appData = JSON.parse(localStorage.getItem('timesheet_v2') || '{"entries":[],"rate":20,"periodStart":""}');
+let periodOffset = 0;
+let calYear, calMonth, selectedWeekStart = null;
+
+function init() {
+  document.getElementById('rate').value = appData.rate || 20;
+  if (appData.periodStart) {
+    document.getElementById('period-start').value = appData.periodStart;
+  } else {
+    const today = new Date();
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const s = mon.toISOString().slice(0,10);
+    document.getElementById('period-start').value = s;
+    appData.periodStart = s;
+  }
+  const today = new Date();
+  calYear = today.getFullYear();
+  calMonth = today.getMonth();
+  document.getElementById('new-date').value = today.toISOString().slice(0,10);
+  ['new-start','new-end','new-lunch'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateCalcPreview);
+  });
+  updateCalcPreview();
+  render();
+  renderCalendar();
+}
+
+function save() {
+  appData.rate = parseFloat(document.getElementById('rate').value) || 0;
+  appData.periodStart = document.getElementById('period-start').value;
+  localStorage.setItem('timesheet_v2', JSON.stringify(appData));
+  recalc();
+}
+
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'calendar') renderCalendar();
+}
+
+function calcHours(start, end, lunchMin) {
+  if (!start || !end) return null;
+  const [sh,sm] = start.split(':').map(Number);
+  const [eh,em] = end.split(':').map(Number);
+  const totalMin = (eh*60+em) - (sh*60+sm) - (lunchMin||0);
+  if (totalMin <= 0) return null;
+  return Math.round(totalMin) / 60;
+}
+
+function updateCalcPreview() {
+  const start = document.getElementById('new-start').value;
+  const end = document.getElementById('new-end').value;
+  const lunch = parseInt(document.getElementById('new-lunch').value) || 0;
+  const hrs = calcHours(start, end, lunch);
+  document.getElementById('calc-preview').textContent = hrs !== null ? hrs.toFixed(2) + ' hrs' : '—';
+}
+
+function getPeriodStart() {
+  const val = document.getElementById('period-start').value;
+  if (!val) return null;
+  const base = new Date(val + 'T00:00:00');
+  base.setDate(base.getDate() + periodOffset * 14);
+  return base;
+}
+
+function getPeriodEnd(start) {
+  const end = new Date(start);
+  end.setDate(end.getDate() + 13);
+  return end;
+}
+
+function fmt(d) {
+  return d.toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function fmtShort(d) {
+  return d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const hh = h % 12 || 12;
+  return hh + (m ? ':' + String(m).padStart(2,'0') : '') + ampm;
+}
+
+function inPeriod(dateStr, start, end) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d >= start && d <= end;
+}
+
+function render() {
+  const start = getPeriodStart();
+  if (!start) {
+    document.getElementById('period-label').textContent = 'Set a start date in settings';
+    document.getElementById('header-period').textContent = 'Set your start date in settings';
+    document.getElementById('entries-list').innerHTML = '<div class="empty">Go to Settings to set your period start date.</div>';
+    return;
+  }
+  const end = getPeriodEnd(start);
+  const label = fmt(start) + ' – ' + fmt(end);
+  document.getElementById('period-label').textContent = label;
+  document.getElementById('header-period').textContent = label;
+
+  const entries = appData.entries.filter(e => inPeriod(e.date, start, end));
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+
+  const list = document.getElementById('entries-list');
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty">No entries yet — add one below.</div>';
+  } else {
+    list.innerHTML = entries.map(e => {
+      const isClinic = e.type === 'clinic';
+      const d = new Date(e.date + 'T00:00:00');
+      let timeLine = '';
+      if (e.start && e.end) {
+        timeLine = fmtTime(e.start) + ' – ' + fmtTime(e.end);
+        if (e.lunch) timeLine += ' · ' + e.lunch + 'min lunch';
+      }
+      return `<div class="entry-item">
+        <div>
+          <div class="entry-date">${fmtShort(d)}</div>
+          ${timeLine ? `<div class="entry-times">${timeLine}</div>` : ''}
+        </div>
+        <div class="entry-right">
+          <span class="badge ${isClinic ? 'clinic' : 'regular'}">${isClinic ? 'Clinic' : 'Regular'}</span>
+          <span class="entry-hours">${parseFloat(e.hours).toFixed(2)}h</span>
+          <button class="del-btn" onclick="deleteEntry('${e.id}')">×</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  recalc();
+}
+
+function recalc() {
+  const start = getPeriodStart();
+  if (!start) return;
+  const end = getPeriodEnd(start);
+  const rate = parseFloat(document.getElementById('rate').value) || 0;
+  const entries = appData.entries.filter(e => inPeriod(e.date, start, end));
+  const total = entries.reduce((s,e) => s + parseFloat(e.hours||0), 0);
+  const clinic = entries.filter(e => e.type==='clinic').reduce((s,e) => s + parseFloat(e.hours||0), 0);
+  document.getElementById('stat-total').textContent = total.toFixed(2);
+  document.getElementById('stat-clinic').textContent = clinic.toFixed(2);
+  document.getElementById('stat-regular').textContent = (total - clinic).toFixed(2);
+  document.getElementById('stat-pay').textContent = '$' + (total * rate).toFixed(2);
+}
+
+function addEntry() {
+  const date = document.getElementById('new-date').value;
+  const start = document.getElementById('new-start').value;
+  const end = document.getElementById('new-end').value;
+  const lunch = parseInt(document.getElementById('new-lunch').value) || 0;
+  const type = document.getElementById('new-type').value;
+  const hours = calcHours(start, end, lunch);
+  if (!date) { showToast('Please pick a date.'); return; }
+  if (hours === null) { showToast('Check your start and end times.'); return; }
+  appData.entries.push({ id: Date.now().toString(), date, start, end, lunch, hours, type });
+  localStorage.setItem('timesheet_v2', JSON.stringify(appData));
+  render();
+  renderCalendar();
+  showToast('Added — ' + hours.toFixed(2) + ' hrs');
+}
+
+function deleteEntry(id) {
+  appData.entries = appData.entries.filter(e => e.id !== id);
+  localStorage.setItem('timesheet_v2', JSON.stringify(appData));
+  render();
+  renderCalendar();
+}
+
+function shiftPeriod(dir) { periodOffset += dir; render(); }
+
+function shiftMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  selectedWeekStart = null;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const label = new Date(calYear, calMonth, 1).toLocaleDateString('en-CA',{month:'long',year:'numeric'});
+  document.getElementById('cal-month-label').textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth+1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  const entryMap = {};
+  appData.entries.forEach(e => {
+    if (!entryMap[e.date]) entryMap[e.date] = {regular:0,clinic:0};
+    entryMap[e.date][e.type] += parseFloat(e.hours||0);
+  });
+
+  const grid = document.getElementById('cal-grid');
+  const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(calYear, calMonth, 1 - (startDow - i));
+    html += `<div class="cal-day other-month"><span class="day-num">${d.getDate()}</span></div>`;
+  }
+
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const e = entryMap[dateStr];
+    const hasR = e && e.regular > 0;
+    const hasC = e && e.clinic > 0;
+    const classes = ['cal-day'];
+    if (hasR && hasC) classes.push('has-both');
+    else if (hasC) classes.push('has-clinic');
+    else if (hasR) classes.push('has-regular');
+    if (dateStr === todayStr) classes.push('today');
+
+    if (selectedWeekStart) {
+      const ws = new Date(selectedWeekStart + 'T00:00:00');
+      const we = new Date(ws); we.setDate(we.getDate()+6);
+      const dd = new Date(dateStr + 'T00:00:00');
+      if (dd >= ws && dd <= we) classes.push('selected');
+    }
+
+    const totalHrs = e ? (e.regular + e.clinic) : 0;
+    const hrsLabel = totalHrs > 0 ? `<span class="day-hrs">${totalHrs.toFixed(1)}h</span>` : '';
+
+    const thisDate = new Date(dateStr + 'T00:00:00');
+    const dow = (thisDate.getDay() + 6) % 7;
+    const ws = new Date(thisDate);
+    ws.setDate(thisDate.getDate() - dow);
+    const weekStartStr = ws.toISOString().slice(0,10);
+
+    html += `<div class="${classes.join(' ')}" onclick="selectWeek('${weekStartStr}')">
+      <span class="day-num">${day}</span>${hrsLabel}
+    </div>`;
+  }
+
+  const totalCells = startDow + lastDay.getDate();
+  const rem = totalCells % 7;
+  if (rem > 0) {
+    for (let i = 1; i <= 7 - rem; i++) {
+      html += `<div class="cal-day other-month"><span class="day-num">${i}</span></div>`;
+    }
+  }
+
+  grid.innerHTML = html;
+  renderWeekDetail();
+}
+
+function selectWeek(weekStartStr) {
+  selectedWeekStart = weekStartStr;
+  renderCalendar();
+}
+
+function renderWeekDetail() {
+  const detail = document.getElementById('week-detail');
+  if (!selectedWeekStart) { detail.style.display = 'none'; return; }
+  detail.style.display = 'block';
+
+  const ws = new Date(selectedWeekStart + 'T00:00:00');
+  const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const entryMap = {};
+  appData.entries.forEach(e => {
+    if (!entryMap[e.date]) entryMap[e.date] = [];
+    entryMap[e.date].push(e);
+  });
+
+  let weekTotal = 0;
+  let rows = '';
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws);
+    d.setDate(ws.getDate() + i);
+    const dateStr = d.toISOString().slice(0,10);
+    const dayEntries = entryMap[dateStr] || [];
+    const dayHrs = dayEntries.reduce((s,e) => s + parseFloat(e.hours||0), 0);
+    weekTotal += dayHrs;
+    const dayDate = d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+
+    if (dayEntries.length === 0) {
+      rows += `<div class="week-row">
+        <span class="week-day-name">${dows[i]}</span>
+        <span class="week-day-date" style="color:var(--text-muted)">${dayDate}</span>
+        <span style="color:var(--border);font-size:13px;">—</span>
+      </div>`;
+    } else {
+      const timeLines = dayEntries.map(e => {
+        const color = e.type === 'clinic' ? 'var(--clinic)' : 'var(--pink)';
+        let t = e.start && e.end ? fmtTime(e.start) + '–' + fmtTime(e.end) : (e.type === 'clinic' ? 'Clinic' : 'Regular');
+        return `<div style="color:${color};font-size:11px;">${t}</div>`;
+      }).join('');
+      rows += `<div class="week-row">
+        <span class="week-day-name">${dows[i]}</span>
+        <div style="flex:1"><div class="week-day-date">${dayDate}</div>${timeLines}</div>
+        <div class="week-day-right"><div class="week-day-hrs">${dayHrs.toFixed(2)}h</div></div>
+      </div>`;
+    }
+  }
+
+  const weekLabel = ws.toLocaleDateString('en-CA',{month:'short',day:'numeric'}) + ' week';
+  detail.innerHTML = `<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">${weekLabel} · ${weekTotal.toFixed(2)} hrs</div>
+    ${rows}
+  </div>`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
